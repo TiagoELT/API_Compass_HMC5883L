@@ -1,7 +1,7 @@
 /*
 * Data: 14/11/2022
 * Universidade: UFMG - Universidade Federal de Minas Gerais
-* Autores: Eduarde e Tiago Rezende Valadares
+* Autores: Eduardo Cardoso Mendes e Tiago Rezende Valadares
 * Versão: 1.0
 * Tipo de licença:
 * Nome da api: HMC5883L
@@ -66,8 +66,6 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
 
 extern I2C_HandleTypeDef hi2c1;
 
-#define SLAVE_ADDRESS_LCD HMC5883L_ADDRESS
-
 #define TIMEOUT 100
 
 HAL_I2C_Master_Transmit (&hi2c1, HMC5883L_ADDRESS,(uint8_t *) data_t, 4, 100);
@@ -109,8 +107,7 @@ uint8_t HMC5883L_getSampleAveraging(){
 void HMC5883L_setSampleAveraging(uint8_t averaging){
   //TODO
   uint8_t data_t[4];
-  write_register(HMC5883L_RA_CONFIG_A, ); 
-  HAL_I2C_Master_Transmit (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, TIMEOUT);
+  write_register(HMC5883L_RA_CONFIG_A,data_t); 
   I2Cdev_writeBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_AVERAGE_BIT, HMC5883L_CRA_AVERAGE_LENGTH, averaging);
 }
 

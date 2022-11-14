@@ -1,7 +1,7 @@
 /*
 * Data: 14/11/2022
 * Universidade: UFMG - Universidade Federal de Minas Gerais
-* Autores: Eduarde e Tiago Rezende Valadares
+* Autores: Eduardo Cardoso Mendes e Tiago Rezende Valadares
 * Versão: 1.0
 * Tipo de licença:
 * Nome da api: HMC5883L
