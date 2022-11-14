@@ -134,7 +134,7 @@ void HMC5883L_setSampleAveraging(uint8_t averaging){
   I2Cdev_writeBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_SA_POS, HMC5883L_CRA_SA_TAM, averaging);
 }
 
-uint8_t HMC5883L_getDataRateMariana(){
+uint8_t HMC5883L_getDataRate(){
   //TODO
   I2Cdev_readBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_RATE_BIT, HMC5883L_CRA_RATE_LENGTH, buffer);
   return buffer[0];
