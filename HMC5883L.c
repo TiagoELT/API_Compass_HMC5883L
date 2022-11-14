@@ -68,13 +68,7 @@ extern I2C_HandleTypeDef hi2c1;
 
 #define TIMEOUT 100
 
-HAL_I2C_Master_Transmit (&hi2c1, HMC5883L_ADDRESS,(uint8_t *) data_t, 4, 100);
-HAL_I2C_Master_Receive (&hi2c1, HMC5883L_ADDRESS,(uint8_t *) data_t, 4, 100);
-
-HAL_Delay(50);  // wait for >40ms
-
-void write_register(uint8_t register_pointer, uint8_t register_value)
-{
+void write_register(uint8_t register_pointer, uint8_t register_value){
     uint8_t data[2];
 
     data[0] = register_pointer;
@@ -83,14 +77,46 @@ void write_register(uint8_t register_pointer, uint8_t register_value)
     HAL_I2C_Master_Transmit(&hi2c1, HMC5883L_ADDRESS, data, 2, 100);  // data is the start pointer of our array
 }
 
-
-void read_register(uint8_t register_pointer, uint8_t* receive_buffer)
-{
+void read_register(uint8_t register_pointer, uint8_t* receive_buffer){
     // first set the register pointer to the register wanted to be read
     HAL_I2C_Master_Transmit(&hi2c1, HMC5883L_ADDRESS, &register_pointer, 1, 100); 
 
     // receive the 1 x 8bit data into the receive buffer
     HAL_I2C_Master_Receive(&hi2c1, HMC5883L_ADDRESS, receive_buffer, 1, 100);   
+}
+
+int8_t I2Cdev_writeBits(uint8_t dev_addr, uint8_t reg_addr, uint8_t start_bit,
+		uint8_t len, uint8_t data){
+    uint8_t b;
+    int8_t err;
+
+    if ((err = I2Cdev_readByte(dev_addr, reg_addr, &b)) == 0) {
+        uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
+        data <<= (start_bit - len + 1); // shift data into correct position
+        data &= mask; // zero all non-important bits in data
+        b &= ~(mask); // zero all important bits in existing byte
+        b |= data; // combine data with existing byte
+
+        return write_register(reg_addr, b);
+    }
+    else {
+        return err;
+    }
+}
+
+int8_t I2Cdev_readBits(uint8_t dev_addr, uint8_t reg_addr, uint8_t start_bit, 
+		uint8_t len, uint8_t *data){
+	int8_t err;
+
+	uint8_t b;
+	if ((err = read_register(reg_addr, &b)) == 0) {
+		uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
+		b &= mask;
+		b >>= (start_bit - len + 1);
+		*data = b;
+	}
+
+	return err;
 }
 
 
@@ -105,13 +131,10 @@ uint8_t HMC5883L_getSampleAveraging(){
 }
 
 void HMC5883L_setSampleAveraging(uint8_t averaging){
-  //TODO
-  uint8_t data_t[4];
-  write_register(HMC5883L_RA_CONFIG_A,data_t); 
-  I2Cdev_writeBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_AVERAGE_BIT, HMC5883L_CRA_AVERAGE_LENGTH, averaging);
+  I2Cdev_writeBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_SA_POS, HMC5883L_CRA_SA_TAM, averaging);
 }
 
-uint8_t HMC5883L_getDataRate(){
+uint8_t HMC5883L_getDataRateMariana(){
   //TODO
   I2Cdev_readBits(devAddr, HMC5883L_RA_CONFIG_A, HMC5883L_CRA_RATE_BIT, HMC5883L_CRA_RATE_LENGTH, buffer);
   return buffer[0];
