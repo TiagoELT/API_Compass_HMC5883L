@@ -94,6 +94,13 @@
 #define HMC5883L_MODE_SINGLE        0x01
 #define HMC5883L_MODE_IDLE          0x02
 
+// Communication Functions
+void write_register(uint8_t register_pointer, uint8_t register_value);
+void read_register(uint8_t register_pointer, uint8_t* receive_buffer);
+void I2Cdev_writeBits(uint8_t reg_addr, uint8_t start_bit, uint8_t len, uint8_t data);
+void I2Cdev_readBits(uint8_t reg_addr, uint8_t start_bit, uint8_t len, uint8_t *data);
+
+
 
 // Configuration Functions
 
@@ -119,14 +126,3 @@ void HMC5883L_initialize();
 void HMC5883L_calibration(int16_t *x, int16_t *y, int16_t *z);
 
 void HMC5883L_measurement();
-
-void HMC5883L_north_inclination();
-
-void HMC5883L_setGain();
-
-void HMC5883L_setMode();
-
-
-
-
-

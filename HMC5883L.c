@@ -68,6 +68,9 @@ extern I2C_HandleTypeDef hi2c1;
 
 #define TIMEOUT 100
 
+static uint8_t buffer[6];
+static uint8_t mode;
+
 void write_register(uint8_t register_pointer, uint8_t register_value){
     uint8_t data[2];
 
@@ -85,38 +88,26 @@ void read_register(uint8_t register_pointer, uint8_t* receive_buffer){
     HAL_I2C_Master_Receive(&hi2c1, HMC5883L_ADDRESS, receive_buffer, 1, 100);   
 }
 
-int8_t I2Cdev_writeBits(uint8_t reg_addr, uint8_t start_bit,
+void I2Cdev_writeBits(uint8_t reg_addr, uint8_t start_bit,
 		uint8_t len, uint8_t data){
     uint8_t b;
-    int8_t err;
+    uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
+    data <<= (start_bit - len + 1); // shift data into correct position
+    data &= mask; // zero all non-important bits in data
+    b &= ~(mask); // zero all important bits in existing byte
+    b |= data; // combine data with existing byte
 
-    if ((err = I2Cdev_readByte(reg_addr, &b)) == 0) {
-        uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
-        data <<= (start_bit - len + 1); // shift data into correct position
-        data &= mask; // zero all non-important bits in data
-        b &= ~(mask); // zero all important bits in existing byte
-        b |= data; // combine data with existing byte
-
-        return write_register(reg_addr, b);
-    }
-    else {
-        return err;
-    }
+    write_register(reg_addr, b);
+  
 }
 
-int8_t I2Cdev_readBits(uint8_t reg_addr, uint8_t start_bit, 
+void I2Cdev_readBits(uint8_t reg_addr, uint8_t start_bit, 
 		uint8_t len, uint8_t *data){
-	int8_t err;
-
 	uint8_t b;
-	if ((err = read_register(reg_addr, &b)) == 0) {
-		uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
-		b &= mask;
-		b >>= (start_bit - len + 1);
-		*data = b;
-	}
-
-	return err;
+	uint8_t mask = ((1 << len) - 1) << (start_bit - len + 1);
+	b &= mask;
+	b >>= (start_bit - len + 1);
+	*data = b;
 }
 
 
@@ -161,7 +152,7 @@ uint8_t HMC5883L_getRange(){
 }
 
 void HMC5883L_setRange(uint8_t range){
-  I2Cdev_writeByte(REG_CONFIG_B, range << (HMC5883L_CRB_RANGE_POS - HMC5883L_CRB_RANGE_TAM + 1));
+  write_register(REG_CONFIG_B, range << (HMC5883L_CRB_RANGE_POS - HMC5883L_CRB_RANGE_TAM + 1));
 }
 
 // MODE register
@@ -170,14 +161,14 @@ uint8_t HMC5883L_getMode(){
   return buffer[0];
 }
 
-void HMC5883L_setMode(uint8_t mode){
-  I2Cdev_writeByte(REG_MODE, newMode << (HMC5883L_MODEREG_POS - HMC5883L_MODEREG_TAM + 1));
+void HMC5883L_setMode(uint8_t newMode){
+  write_register(REG_MODE, newMode << (HMC5883L_MODEREG_POS - HMC5883L_MODEREG_TAM + 1));
 }
 
 // General Functions
 void HMC5883L_initialize(){
      // write CONFIG_A register
-    I2Cdev_writeByte(REG_CONFIG_A,
+    write_register(REG_CONFIG_A,
         (HMC5883L_SAMPLE_AVERAGE_8 << (HMC5883L_CRA_SA_POS - HMC5883L_CRA_SA_TAM + 1)) |
         (HMC5883L_DATARATE_15HZ     << (HMC5883L_CRA_DATARATE_POS - HMC5883L_CRA_DATARATE_TAM + 1)) |
         (HMC5883L_MEAS_MODE_NORMAL << (HMC5883L_CRA_MM_POS - HMC5883L_CRA_MM_TAM + 1)));
@@ -190,9 +181,9 @@ void HMC5883L_initialize(){
 }
 
 void HMC5883L_measurement(int16_t *x, int16_t *y, int16_t *z){
-  I2Cdev_readBytes(REG_DATA_OUT_X_MSB, 6, buffer);
+  read_register(REG_DATA_OUT_X_MSB, buffer);
   if (mode == HMC5883L_MODE_SINGLE){
-    I2Cdev_writeByte(REG_MODE, HMC5883L_MODE_SINGLE << (HMC5883L_MODEREG_POS - HMC5883L_MODE_IDLE + 1));
+    write_register(REG_MODE, HMC5883L_MODE_SINGLE << (HMC5883L_MODEREG_POS - HMC5883L_MODE_IDLE + 1));
   }
   *x = (((int16_t)buffer[0]) << 8) | buffer[1];
   *y = (((int16_t)buffer[4]) << 8) | buffer[5];
