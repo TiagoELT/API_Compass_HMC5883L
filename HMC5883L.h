@@ -21,10 +21,17 @@
 * Sistemas Embarcados da UFMG – Prof. Ricardo de Oliveira Duarte – 
 * Departamento de Engenharia Eletrônica”.
 */
+#ifndef _HMC5883L_H_
+#define _HMC5883L_H_
 
-#include "stm32f1xx_hal.h"
+#include "I2Cdev.h"
+
+
+/*************************** I2C Device Addres ********************************/
 
 #define HMC5883L_ADDRESS          0x1E
+
+/****************************** Registeres ************************************/
 
 #define REG_CONFIG_A              0x00
 #define REG_CONFIG_B              0x01
@@ -39,6 +46,7 @@
 #define REG_IDENT_A               0x0A
 #define REG_IDENT_B               0x0B
 #define REG_IDENT_C               0x0C
+
 
 // Configuration Register A
 // Layout for the bits of Configuration Register A (CRA)
@@ -94,16 +102,14 @@
 #define HMC5883L_MODE_SINGLE        0x01
 #define HMC5883L_MODE_IDLE          0x02
 
-// Communication Functions
-void write_register(uint8_t register_pointer, uint8_t register_value);
-void read_register(uint8_t register_pointer, uint8_t* receive_buffer);
-void I2Cdev_writeBits(uint8_t reg_addr, uint8_t start_bit, uint8_t len, uint8_t data);
-void I2Cdev_readBits(uint8_t reg_addr, uint8_t start_bit, uint8_t len, uint8_t *data);
+/************************ Communication Functions ******************************/
+/* As funções de comunicação com I2C utilizam a biblioteca "i2cdevlib", 
+* disponível em:
+* https://github.com/jrowberg/i2cdevlib
+*/
 
 
-
-// Configuration Functions
-
+/************************ Configuration Functions ******************************/
 // Configuration Register A
 uint8_t HMC5883L_getSampleAveraging();
 void HMC5883L_setSampleAveraging(uint8_t averaging);
@@ -121,8 +127,12 @@ uint8_t HMC5883L_getMode();
 void HMC5883L_setMode(uint8_t mode);
 
 // General Functions
-void HMC5883L_initialize();
+void HMC5883L_initialize(I2C_HandleTypeDef * hi2c);
 
-void HMC5883L_calibration(int16_t *x, int16_t *y, int16_t *z);
+bool HMC5883L_testConnection(I2C_HandleTypeDef * hi2c);
 
-void HMC5883L_measurement();
+void HMC5883L_calibration();
+
+void HMC5883L_measurement(int16_t *x, int16_t *y, int16_t *z);
+
+#endif /* _HMC5883L_H_ */
